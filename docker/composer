@@ -1,0 +1,5 @@
+#!/bin/bash
+# Usage: bin/composer <PARAMETERS>
+. docker/helpers/common.sh
+cd $laradock;
+docker-compose exec --user=laradock workspace composer $@

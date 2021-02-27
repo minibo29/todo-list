@@ -1,0 +1,6 @@
+#!/bin/bash
+# Logins to the running container.
+
+. docker/helpers/common.sh
+cd $laradock;
+docker-compose exec --user=laradock workspace bash

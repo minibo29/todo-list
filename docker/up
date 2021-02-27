@@ -1,0 +1,49 @@
+#!/bin/bash
+# Starts project containers
+# Usage: docker/start
+# Usage: docker/start -f
+
+. docker/helpers/common.sh
+cd $laradock;
+cp env-example .env
+
+#sed -i "s/WORKSPACE_INSTALL_XDEBUG=false/WORKSPACE_INSTALL_XDEBUG=true/g" .env
+#sed -i "s/PHP_FPM_INSTALL_XDEBUG=false/PHP_FPM_INSTALL_XDEBUG=true/g" .env
+#sed -i "s/INSTALL_PGSQL=false/INSTALL_PGSQL=true/g" .env
+sed -i "s/WORKSPACE_INSTALL_PYTHON=false/WORKSPACE_INSTALL_PYTHON=true/g" .env
+sed -i "s/WORKSPACE_INSTALL_IMAGEMAGICK=false/WORKSPACE_INSTALL_IMAGEMAGICK=true/g" .env
+sed -i "s/xdebug.remote_connect_back=0/xdebug.remote_connect_back=1/" php-fpm/xdebug.ini
+#sed -i "s/include fastcgi_params;/include fastcgi_params;\n        fastcgi_param APPLICATION_ENV  ${APPLICATION_ENV};/" nginx/sites/default.conf
+
+
+sed -i "s/WORKSPACE_INSTALL_SYMFONY=false/WORKSPACE_INSTALL_SYMFONY=true/g" .env
+#sed -i "s/PHP_FPM_INSTALL_MYSQLI=true/PHP_FPM_INSTALL_MYSQLI=false/g" .env
+sed -i "s/PHP_VERSION=7.3/PHP_VERSION=7.4/g" .env
+sed -i "s/MYSQL_DATABASE=default/MYSQL_DATABASE=todo-list/g" .env
+cp -f nginx/sites/symfony.conf.example nginx/sites/symfony.conf
+
+nocache=''
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -f|--force)
+    nocache="--no-cache"
+    shift # past argument
+    shift # past value
+    ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+docker-compose build ${nocache} nginx php-fpm workspace mysql
+docker-compose up -d nginx mysql
+
+git checkout HEAD -- php-fpm/xdebug.ini
+git checkout HEAD -- php-fpm/Dockerfile
+git checkout HEAD -- workspace/Dockerfile
+git checkout HEAD -- nginx/sites/default.conf
+
+cd ..;
