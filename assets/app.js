@@ -22,5 +22,75 @@ require('bootstrap');
 // require('bootstrap/js/dist/popover');
 
 $(document).ready(function() {
-  $('[data-toggle="popover"]').popover();
+
+
+  $('.list-item .delete').click(function(e) {
+    e.preventDefault();
+    if (e.target !== this)
+      return;
+
+    const $element = $(e.target);
+    const $list_item = $element.closest('.list-item');
+    const item_id = $list_item.data('id');
+    const csrf_token = $list_item.data('csrf_token');
+    const url = '/task-list/' + item_id;
+
+    $list_item.addClass('loading');
+    $.ajax({
+      url: url,
+      type: 'DELETE',
+      data: { _token: csrf_token }
+    }).then((response) => {
+      console.log(response);
+      $list_item.remove();
+    }).catch((error) => {
+      console.log(error);
+      $list_item.removeClass('loading');
+    });
+  });
+
+  $('.list-item').click( function (e) {
+    e.preventDefault();
+    if (e.target !== this)
+      return;
+    const $list_item = $(e.target);
+    const item_id = $list_item.data('id');
+    const csrf_token = $list_item.data('csrf_token');
+    const url = '/task-list/' + item_id + '/edit';
+    const done = $list_item.hasClass('checked');
+
+    console.log(done);
+    $list_item.addClass('loading');
+
+    $.ajax({
+      url: url,
+      type: 'post',
+      data: { done: + !done, _token: csrf_token}
+    }).then((response) => {
+      $list_item.removeClass('loading');
+      if (done) {
+        $list_item.removeClass('checked')
+      } else {
+        $list_item.addClass('checked')
+      }
+    }).catch((error) => {
+      $list_item.removeClass('loading');
+    });
+
+
+
+    // $list_item.addClass('loading');
+    // $.ajax({
+    //   url: url,
+    //   type: 'POST',
+    //   data: { _token: csrf_token}
+    // }).then((response) => {
+    //   console.log(response);
+    //   $list_item.remove();
+    // }).catch((error) => {
+    //   console.log(error);
+    //   $list_item.removeClass('loading');
+    // });
+  });
+
 });

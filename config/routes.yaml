@@ -1,3 +1,7 @@
 index:
     path: /
-    controller: App\Controller\IndexController::index
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::redirectAction
+    defaults:
+        route: task_list_index
+        permanent: true
+        keepQueryParams: true

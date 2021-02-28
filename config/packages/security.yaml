@@ -22,7 +22,7 @@ security:
                 authenticators:
                     - App\Security\LoginFormAuthenticator
             logout:
-                path: app_logout
+                path: user_logout
                 # where to redirect after logout
                 # target: app_any_route
 
@@ -36,8 +36,10 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
 #        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/index, roles: ROLE_USER }
+        - { path: ^/$, roles: IS_AUTHENTICATED_FULLY }
+#        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/task-list, roles: ROLE_USER }
+#        - { path: ^/$, roles: IS_AUTHENTICATED_ANONYMOUSLY }
 
         # matches /admin/* except for anything matching the above rule
 #        - { path: ^/admin, roles: ROLE_ADMIN }

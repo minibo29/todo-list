@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Serializer\SerializerInterface;
 
 /**
  * @Route("/task-list")
@@ -22,8 +23,12 @@ class TaskListController extends AbstractController
      */
     public function index(TaskListRepository $taskListRepository): Response
     {
+        $taskList = new TaskList();
+        $form = $this->createForm(TaskListType::class, $taskList, ['action' => $this->generateUrl('task_list_new')]);
+
         return $this->render('task_list/index.html.twig', [
             'task_lists' => $taskListRepository->findAll(),
+            'form' => $form->createView(),
         ]);
     }
 
@@ -37,6 +42,8 @@ class TaskListController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $taskList->setUserId($this->getUser()->getId());
+
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->persist($taskList);
             $entityManager->flush();
@@ -50,28 +57,50 @@ class TaskListController extends AbstractController
         ]);
     }
 
-    /**
-     * @Route("/{id}", name="task_list_show", methods={"GET"})
-     */
-    public function show(TaskList $taskList): Response
-    {
-        return $this->render('task_list/show.html.twig', [
-            'task_list' => $taskList,
-        ]);
-    }
+//    /**
+//     * @Route("/{id}", name="task_list_show", methods={"GET"})
+//     */
+//    public function show(TaskList $taskList): Response
+//    {
+//        return $this->render('task_list/show.html.twig', [
+//            'task_list' => $taskList,
+//        ]);
+//    }
 
     /**
-     * @Route("/{id}/edit", name="task_list_edit", methods={"GET","POST"})
+     * @Route("/{id}/edit", name="task_list_edit", methods={"POST"})
      */
-    public function edit(Request $request, TaskList $taskList): Response
+    public function edit(Request $request, TaskList $taskList, SerializerInterface $serializer): Response
     {
         $form = $this->createForm(TaskListType::class, $taskList);
+
+        if ($request->isXmlHttpRequest()) {
+            $form->submit(array_merge($serializer->normalize($taskList, 'array'), $request->request->all()));
+        }
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
+        if ($form->isSubmitted()) {
+//            if ($form->isValid()) {
 
-            return $this->redirectToRoute('task_list_index');
+                $entityManager = $this->getDoctrine()->getManager();
+                $entityManager->persist($taskList);
+                $taskList->setDone($request->request->get('done', 0));
+                $entityManager->flush();
+
+                if ($request->isXmlHttpRequest()) {
+                    return $this->json(['message' => $request->request->get('done', 0)], Response::HTTP_OK);
+                }
+
+                return $this->redirectToRoute('task_list_index');
+//            } else {
+//                return $this->json(['message' => $form->getErrors()], Response::HTTP_OK);
+//
+//            }
+
+        }
+        dd(111);
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['message' => $form->isSubmitted()], Response::HTTP_BAD_REQUEST);
         }
 
         return $this->render('task_list/edit.html.twig', [
@@ -85,10 +114,20 @@ class TaskListController extends AbstractController
      */
     public function delete(Request $request, TaskList $taskList): Response
     {
+        $message = 'Bad request!';
+        $status = Response::HTTP_BAD_REQUEST;
+
         if ($this->isCsrfTokenValid('delete'.$taskList->getId(), $request->request->get('_token'))) {
             $entityManager = $this->getDoctrine()->getManager();
             $entityManager->remove($taskList);
             $entityManager->flush();
+
+            $message = 'Item was Deleted!';
+            $status = Response::HTTP_OK;
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return $this->json(['message' => $message], $status);
         }
 
         return $this->redirectToRoute('task_list_index');

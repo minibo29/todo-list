@@ -5,35 +5,13 @@
 {% block body %}
     <h1>TaskList index</h1>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Title</th>
-                <th>User_id</th>
-                <th>Done</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for task_list in task_lists %}
-            <tr>
-                <td>{{ task_list.id }}</td>
-                <td>{{ task_list.title }}</td>
-                <td>{{ task_list.userId }}</td>
-                <td>{{ task_list.done }}</td>
-                <td>
-                    <a href="{{ path('task_list_show', {'id': task_list.id}) }}">show</a>
-                    <a href="{{ path('task_list_edit', {'id': task_list.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    {{ include('task_list/_form.html.twig') }}
 
-    <a href="{{ path('task_list_new') }}">Create new</a>
+    <ul class="mx-0 px-0 my-2 todo-list">
+        {% for task_list in task_lists %}
+            <li class="list-item {{ task_list.done ? 'checked' : '' }}" data-id="{{ task_list.id }}" data-csrf_token="{{ csrf_token('delete' ~ task_list.id) }}"> {{ task_list.title }} <span class="delete">×</span> </li>
+        {% endfor %}
+    </ul>
+
+    {#<a href="{{ path('task_list_new') }}">Create new</a>#}
 {% endblock %}
